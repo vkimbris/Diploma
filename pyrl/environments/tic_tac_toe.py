@@ -1,33 +1,27 @@
 import torch
-import tkinter as tk
 
-from torch import Tensor
-
-from .base_env import BaseEnvironment
-from ..policy import BasePolicy
 from typing import Tuple
 
+from .base_env import BaseEnvironment
+from ..agents import Agent
 
 class TicTacToe(BaseEnvironment):
 
-    def __init__(self, player: BasePolicy, first: bool = False, vparams: dict = None):
-        super(TicTacToe, self).__init__(state_dim=9,
-                                        action_space=torch.arange(9),
-                                        vparams=vparams)
+    def __init__(self, player: Agent, first: bool = False):
+        super(TicTacToe, self).__init__()
 
         self.player = player
         self.first = first
 
-        self.field = torch.torch.full(size=(self.state_dim, ), fill_value=.5)
+        self.field = torch.torch.full(size=(9, ), fill_value=.5)
         self.chip = 1 if self.first else 0
 
-        self.available_actions = action_space
 
     def init(self) -> torch.tensor:
         if self.first:
             return self.field
 
-        player_turn = self.player.sample(self.field)
+        player_turn = self.player.action(self.field, torch.arange(9))
 
         self.field[player_turn] = 1
 
@@ -35,13 +29,13 @@ class TicTacToe(BaseEnvironment):
 
     def step(self, action: torch.tensor) -> Tuple[torch.tensor, float, bool]:
         # algorithm decision
-        self.field[action.item()] = self.chip
+        self.field[action] = self.chip
 
         if torch.all(self.field != .5):
             return self.field, self.__get_final_reward(), True
 
         # player decision
-        player_turn = self.player.sample(self.field)
+        player_turn = self.player.action(self.field, self.get_available_actions(self.field))
         self.field[player_turn] = 1 - self.chip
 
         if torch.all(self.field != .5):
@@ -50,12 +44,7 @@ class TicTacToe(BaseEnvironment):
         return self.field, 0.0, False
 
     def get_available_actions(self, state: torch.tensor) -> torch.tensor:
-        pass
-
-    def visualize(self, policy: BasePolicy):
-        # some code to visualize Tic Tac Toe
-
-        super(TicTacToe, self).visualize(policy)
+        return torch.where(state == .5)[0]
 
     def __get_final_reward(self) -> torch.tensor:
         field = self.field.reshape(3, 3)

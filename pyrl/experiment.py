@@ -1,38 +1,35 @@
-from .policy import BasePolicy, GreedyPolicy
 from .environments import BaseEnvironment
-from .algorithms.value.base_alg import BaseAlgorithm
+from .agents import Agent
 
 from tqdm import tqdm
 
 
 class Experiment:
-    def __init__(self, algorithm: BaseAlgorithm, policy: BasePolicy, environment: BaseEnvironment):
-        self.algorithm = algorithm
-        self.policy = policy
+    def __init__(self, agent: Agent, environment: BaseEnvironment):
+        self.agent = agent
         self.environment = environment
 
         self.memory = []
 
-    def run(self, n_epochs: int, progress=False):
+    def explore(self, n_epochs: int, progress=False):
         state = self.environment.init()
 
         for _ in tqdm(range(n_epochs), disable=not progress):
+            print(state)
             available_actions = self.environment.get_available_actions(state)
 
-            action = self.policy.sample(state)
+            action = self.agent.action(state, available_actions, epsilon=0.2)
             new_state, reward, terminal = self.environment.step(action)
-
-            if terminal:
-                return
-
-            state = new_state
 
             self.memory.append((state, action, reward, new_state))
 
-    def train(self) -> None:
-        self.algorithm.train(self.memory)
+            state = new_state
 
-        self.policy.update(self.algorithm.q)
+            if terminal:
+                return self.memory
 
-    def get_greedy_policy(self) -> GreedyPolicy:
-        return GreedyPolicy(self.policy.q)
+        return self.memory
+
+    def __train_alg(self) -> None:
+        self.agent.algorithm.train(self.memory)
+

@@ -1,15 +1,19 @@
 import torch
 import torch.nn as nn
 
+from torch.optim import Adam
+from torch.nn import MSELoss
+
+from pyrl.agents import Agent, EpsilonGreedyAgent
 from pyrl.environments import TicTacToe
-from pyrl.policy import SoftPolicy, GreedyPolicy
+from pyrl.algorithms.value import QLearning
+
 from pyrl.experiment import Experiment
-from pyrl.algorithms.value import MonteCarlo
 
 
-class Q(nn.Module):
+class DQN(nn.Module):
     def __init__(self):
-        super(Q, self).__init__()
+        super(DQN, self).__init__()
 
         self.linear = nn.Sequential(
             nn.Linear(9, 18),
@@ -20,16 +24,23 @@ class Q(nn.Module):
     def forward(self, x):
         return self.linear(x)
 
+dqn = DQN()
 
-q = Q()
+# create algorithm
+q_learning = QLearning(network=dqn, 
+                       gamma=1, 
+                       optimizer=Adam(params=dqn.parameters(), lr=1e-3),
+                       loss_func=MSELoss())
 
-player = GreedyPolicy(q=q)
-env = TicTacToe(player=player)
+agent = EpsilonGreedyAgent(q_learning, epsilon=1)
+player = EpsilonGreedyAgent(q_learning, epsilon=1)
 
 
-s0 = env.init()
-a0 = torch.tensor(3)
+env = TicTacToe(player=player, first=True)
 
-s1 = env.step(a0)
+exp = Experiment(agent=agent, environment=env)
 
-print(s1)
+
+memory = exp.explore(n_epochs=100, progress=False)
+
+print(memory)
