@@ -1,6 +1,8 @@
 import torch
 import torch.nn as nn
 
+import matplotlib.pyplot as plt
+
 from torch.optim import Adam
 from torch.nn import MSELoss
 
@@ -16,9 +18,10 @@ class DQN(nn.Module):
         super(DQN, self).__init__()
 
         self.linear = nn.Sequential(
-            nn.Linear(9, 18),
+            nn.Linear(9, 32),
             nn.Sigmoid(),
-            nn.Linear(18, 9)
+            nn.Linear(32, 9),
+            nn.Tanh(),
         )
 
     def forward(self, x):
@@ -29,18 +32,20 @@ dqn = DQN()
 # create algorithm
 q_learning = QLearning(network=dqn, 
                        gamma=1, 
-                       optimizer=Adam(params=dqn.parameters(), lr=1e-3),
+                       optimizer=Adam(params=dqn.parameters(), lr=1e-2),
                        loss_func=MSELoss())
 
-agent = EpsilonGreedyAgent(q_learning, epsilon=1)
-player = EpsilonGreedyAgent(q_learning, epsilon=1)
+agent = Agent(q_learning)
 
-
-env = TicTacToe(player=player, first=True)
+env = TicTacToe(player=agent, first=True)
 
 exp = Experiment(agent=agent, environment=env)
 
 
-memory = exp.explore(n_epochs=100, progress=False)
+agent, rewards = exp.explore(n_epochs=50_000, progress=True, visualize=False)
 
-print(memory)
+plt.plot(rewards)
+plt.show()
+
+
+exp.explore(n_epochs=10, progress=False, visualize=True, EPS_START=0)

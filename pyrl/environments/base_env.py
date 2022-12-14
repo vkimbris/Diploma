@@ -19,3 +19,5 @@ class BaseEnvironment:
     def get_available_actions(self, state: torch.tensor) -> torch.tensor:
         pass
 
+    def visualize(self, state: torch.tensor) -> None:
+        pass

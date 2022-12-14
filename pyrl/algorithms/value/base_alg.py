@@ -16,7 +16,7 @@ class BaseAlgorithm:
         
         target = self.get_target(actions, new_states, rewards)
 
-        loss = self.loss_func(target - self.network(states))
+        loss = self.loss_func(self.network(states).gather(1, actions), target)
         loss.backward()
 
         self.optimizer.step()
@@ -24,10 +24,10 @@ class BaseAlgorithm:
         
     @staticmethod
     def unpack_batch(batch: List[tuple]) -> Any:
-        states = torch.tensor([transition[0] for transition in batch]).reshape(-1, 1)
+        states = torch.cat([transition[0] for transition in batch]).reshape(-1, len(batch[0][0]))
         actions = torch.tensor([transition[1] for transition in batch]).reshape(-1, 1)
-        new_states = torch.tensor([transition[2] for transition in batch]).reshape(-1, 1)
-        rewards = torch.tensor([transition[3] for transition in batch]).reshape(-1, 1)
+        rewards = torch.tensor([transition[2] for transition in batch]).reshape(-1, 1)
+        new_states = torch.cat([transition[3] for transition in batch]).reshape(-1, len(batch[0][0]))
 
         return states, actions, new_states, rewards
         
@@ -37,4 +37,8 @@ class BaseAlgorithm:
                    rewards: torch.tensor) -> torch.tensor:
 
         pass
+
+    def trigger_func(self):
+        pass
+
     
