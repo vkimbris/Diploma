@@ -1,2 +1,3 @@
-from .base_env import BaseEnvironment
-from .tic_tac_toe import TicTacToe
+from .env import Environment
+from .dice_rolling import DiceRolling
+from .bet_rolling import BetDiceRolling
