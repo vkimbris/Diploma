@@ -15,7 +15,6 @@ class DiceRolling(Environment):
 
         super().__init__(action_space, state_space)
 
-
     def init(self) -> DiscreteState:
         return self.state_space[0]
     
